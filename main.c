@@ -10,9 +10,9 @@ void sp_key(char *bind_key, char **bind_values, int *bind_len);
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2)
+    if (argc < 2)
     {
-        printf("usage: %s <filename>", argv[0]);
+        printf("usage: %s <filename> [whitelisted keys]", argv[0]);
         return 1;
     }
 
@@ -66,18 +66,37 @@ int main(int argc, char *argv[])
 
         if (got_bind)
         {
-            // inject sp_key into the keymap
-            sp_key(bind_key, bind_values, &n_values);
+            bool forbidden = true;
 
-            printf("bind %s", bind_key);
+            if (argc > 2) // check for whitelisted keys
+            {
+                for (int i = 2; i < argc; i++)
+                    if (strcmp(argv[i], bind_key) == 0)
+                    {
+                        forbidden = false;
+                        break;
+                    }
+            } else
+                forbidden = false;
 
-            for (int i = 0; i < n_values - 1; ++i)
-                printf(" %s", bind_values[i]);
+            if (!forbidden)
+            {
+                // inject sp_key into the keymap
+                sp_key(bind_key, bind_values, &n_values);
 
-            printf("%s", bind_values[n_values - 1]);
+                printf("bind %s", bind_key);
 
-            printf("\r\n");
-        } else
+                for (int i = 0; i < n_values - 1; ++i)
+                    printf(" %s", bind_values[i]);
+
+                printf("%s", bind_values[n_values - 1]);
+
+                printf("\r\n");
+            }else{
+                printf("%s", in_copy);
+            }
+        }
+        if (!got_bind)
             printf("%s", in_copy);
     }
     fclose(f);

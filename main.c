@@ -8,8 +8,14 @@ char sp_key_buf[64] = {};
 char sp_bind_key_lower[32] = {};
 void sp_key(char *bind_key, char **bind_values, int *bind_len);
 
-int main(int argc, char *argv[])
+int argc = 0;
+char **argv = NULL;
+
+int main(int t_argc, char *t_argv[])
 {
+    argc = t_argc;
+    argv = t_argv;
+
     if (argc < 2)
     {
         printf("usage: %s <filename> [whitelisted keys]", argv[0]);
@@ -66,35 +72,15 @@ int main(int argc, char *argv[])
 
         if (got_bind)
         {
-            bool forbidden = true;
+            // inject sp_key into the keymap
+            sp_key(bind_key, bind_values, &n_values);
 
-            if (argc > 2) // check for whitelisted keys
-            {
-                for (int i = 2; i < argc; i++)
-                    if (strcmp(argv[i], bind_key) == 0)
-                    {
-                        forbidden = false;
-                        break;
-                    }
-            } else
-                forbidden = false;
+            printf("bind %s", bind_key);
 
-            if (!forbidden)
-            {
-                // inject sp_key into the keymap
-                sp_key(bind_key, bind_values, &n_values);
+            for (int i = 0; i < n_values; ++i)
+                printf(" %s", bind_values[i]);
 
-                printf("bind %s", bind_key);
-
-                for (int i = 0; i < n_values - 1; ++i)
-                    printf(" %s", bind_values[i]);
-
-                printf("%s", bind_values[n_values - 1]);
-
-                printf("\r\n");
-            }else{
-                printf("%s", in_copy);
-            }
+            printf("\r\n");
         }
         if (!got_bind)
             printf("%s", in_copy);
@@ -118,6 +104,20 @@ void sp_key(char *bind_key, char **bind_values, int *bind_len)
         sp_bind_key++;
     if (sp_bind_key[strlen(sp_bind_key) - 1] == '"')
         sp_bind_key[strlen(sp_bind_key) - 1] = '\0';
+
+    if (argc > 2) // check for whitelisted keys
+    {
+        bool forbidden = true;
+        for (int i = 2; i < argc; i++)
+            if (strcmp(argv[i], sp_bind_key) == 0)
+            {
+                forbidden = false;
+                break;
+            }
+
+        if (forbidden)
+            return;
+    }
 
     memset(sp_key_buf, 0, sizeof(sp_key_buf));
     char *last_val = bind_values[*bind_len - 1];
